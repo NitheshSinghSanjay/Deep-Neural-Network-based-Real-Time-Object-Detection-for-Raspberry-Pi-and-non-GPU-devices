@@ -9,11 +9,11 @@ $ curl http://www.linux-projects.org/listing/uv4l_repo/lpkey.asc | sudo apt-key 
 open file /etc/apt/sources.list using nano or any preferred editor and add the below line: <br>
 $ deb http://www.linux-projects.org/listing/uv4l_repo/raspbian/stretch stretch main <br>
 
-After 
+After successfully saving sources.list file, execute the below commands to install uv4l: <br>
 $ sudo apt-get update <br>
 $ sudo apt-get install uv4l uv4l-raspicam
 
-Service script to launch, restart, and stop UV4L can be installed using following command: <br>
+UV4L service script for launching, restarting, and stoping UV4L is installed using following command: <br>
 $ sudo apt-get install uv4l-raspicam-extras <br>
 
 Once the uv4l service script is installed, execute the following command to reload uv4l:<br>
