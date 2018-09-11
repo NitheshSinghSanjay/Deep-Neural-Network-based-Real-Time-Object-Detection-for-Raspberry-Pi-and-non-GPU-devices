@@ -4,6 +4,10 @@ Streamed video from raspberry pi can also be sent directly to any OpenCV applica
 
 ### UV4L installation in Raspberry Pi
 
+#### Pre-requisites
+1. Raspberry Pi installed with raspbian operating system
+2. Camera attached to raspberry pi. Make sure you have activated the camera in raspberry pi configuration
+
 $ curl http://www.linux-projects.org/listing/uv4l_repo/lpkey.asc | sudo apt-key add -
 
 open file /etc/apt/sources.list using nano or any preferred editor and add the below line: <br>
@@ -13,8 +17,11 @@ After successfully saving sources.list file, execute the below commands to insta
 $ sudo apt-get update <br>
 $ sudo apt-get install uv4l uv4l-raspicam
 
-UV4L service script for launching, restarting, and stoping UV4L is installed using following command: <br>
+UV4L script for launching, restarting, and stoping UV4L service is installed using following command: <br>
 $ sudo apt-get install uv4l-raspicam-extras <br>
 
 Once the uv4l service script is installed, execute the following command to reload uv4l:<br>
 $ sudo service uv4l_raspicam restart
+
+Now you can view the video stream in any web browser by using the url: http://your_raspberry_pi_IP_addr:8080/ <br>
+
