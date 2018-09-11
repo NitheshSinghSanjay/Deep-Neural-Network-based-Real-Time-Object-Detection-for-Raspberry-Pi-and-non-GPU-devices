@@ -1,4 +1,4 @@
-# Real time video streaming guide for Raspbery Pi
+# Real Time Video Streaming Guide for Raspbery Pi
 This guide explains how to achieve real time video streaming from a remote IP camera connected to raspberry pi to any computer (PC/Mac/Linux). 
 Streamed video from raspberry pi can also be sent directly to any OpenCV application which can be used for further processing.
 
