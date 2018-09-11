@@ -1,4 +1,4 @@
-# Real time video streaming guide for raspberypi
+# Real time video streaming guide for Raspbery Pi
 This guide explains how to achieve real time video streaming from a remote IP camera connected to raspberry pi to any computer (PC/Mac/Linux). 
 Streamed video from raspberry pi can also be sent directly to any OpenCV application which can be used for further processing.
 
@@ -6,9 +6,10 @@ Streamed video from raspberry pi can also be sent directly to any OpenCV applica
 
 $ curl http://www.linux-projects.org/listing/uv4l_repo/lpkey.asc | sudo apt-key add -
 
-open file /etc/apt/sources.list
-
+open file /etc/apt/sources.list using nano or any preferred editor and add the below line: <br>
 $ deb http://www.linux-projects.org/listing/uv4l_repo/raspbian/stretch stretch main <br>
+
+After 
 $ sudo apt-get update <br>
 $ sudo apt-get install uv4l uv4l-raspicam
 
