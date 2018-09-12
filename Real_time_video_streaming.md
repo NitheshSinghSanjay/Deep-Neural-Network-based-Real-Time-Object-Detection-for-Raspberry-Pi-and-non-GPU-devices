@@ -31,5 +31,9 @@ If you are connected to wifi, your ip address is the inet address.
 
 ### Receive the raspberry pi video stream in OpenCV application running in computer
 #### step 1
-Open the OpenCV-capture-test.py file from this repository in your favorite editor
+Open the OpenCV-capture-test.py file from this repository in your favorite editor.
 #### Step 2
+In the line 8, replace "192.168.0.186" with your raspberry pi IP address and save the file.
+#### Step 3
+Now execute the file using the following command to view the livestream <br>
+##### $ python OpenCV-capture-test.py
