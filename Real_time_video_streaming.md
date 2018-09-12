@@ -5,8 +5,8 @@ Streamed video from raspberry pi can also be sent directly to any OpenCV applica
 ### UV4L installation in Raspberry Pi
 
 #### Pre-requisites
-1. Raspberry Pi installed with raspbian operating system
-2. Camera attached to raspberry pi. Make sure you have activated the camera in raspberry pi configuration
+1. Raspberry Pi installed with raspbian operating system.
+2. Camera attached to raspberry pi. Make sure you have activated the camera in raspberry pi configuration.
 
 #### Steps to install UV4L
 ##### $ curl http://www.linux-projects.org/listing/uv4l_repo/lpkey.asc | sudo apt-key add -
@@ -35,5 +35,5 @@ Open the OpenCV-capture-test.py file from this repository in your favorite edito
 #### Step 2
 In the line 8, replace "192.168.0.186" with your raspberry pi IP address and save the file.
 #### Step 3
-Now execute the file using the following command to view the livestream <br>
+Now execute the file using the following command to view the livestream.
 ##### $ python OpenCV-capture-test.py
