@@ -28,3 +28,8 @@ Now you can view the video stream in any web browser by using the url: http://yo
 Replace "your_raspberry_pi_addr" with the ip address of your raspberry pi. To check your ip address execute the following command:
 ##### $ ifconfig
 If you are connected to wifi, your ip address is the inet address.
+
+### Receive the raspberry pi video stream in OpenCV application running in computer
+#### step 1
+Open the OpenCV-capture-test.py file from this repository in your favorite editor
+#### Step 2
