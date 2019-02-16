@@ -70,7 +70,7 @@ model = build_model(image_size=(img_height, img_width, img_channels),
 
 # 2: Optional: Load some weights
 
-model.load_weights('new_mobv2_epoch-45_val_loss-2.0145.h5', by_name=True)
+model.load_weights('trained_weights/new_mobv2_epoch-45_val_loss-2.0145.h5', by_name=True)
 
 # 3: Instantiate an Adam optimizer and the SSD loss function and compile the model
 
