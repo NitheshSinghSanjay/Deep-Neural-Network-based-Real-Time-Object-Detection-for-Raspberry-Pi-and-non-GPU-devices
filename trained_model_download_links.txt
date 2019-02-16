@@ -3,3 +3,5 @@ http://www.mediafire.com/file/lehzlin019f690a/ssd300_pascal_07%252B12_epoch-117_
 
 #2 ssd7 trained model link:
 http://www.mediafire.com/file/80372jkdb6jaav3/ssd7_epoch-20_loss-2.3970_val_loss-2.4971.h5/file
+
+#New changes made
