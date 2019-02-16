@@ -24,9 +24,9 @@ from keras.layers import DepthwiseConv2D, add
 from keras.regularizers import l2
 import keras.backend as K
 
-from keras_layers.keras_layer_AnchorBoxes import AnchorBoxes
-from keras_layers.keras_layer_DecodeDetections import DecodeDetections
-from keras_layers.keras_layer_DecodeDetectionsFast import DecodeDetectionsFast
+from layers.keras_layer_AnchorBoxes import AnchorBoxes
+from layers.keras_layer_DecodeDetections import DecodeDetections
+from layers.keras_layer_DecodeDetectionsFast import DecodeDetectionsFast
 
 #def relu6(x):
 #   return K.relu(x, max_value=6)

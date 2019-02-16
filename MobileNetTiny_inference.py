@@ -8,7 +8,7 @@ from math import ceil
 import numpy as np
 from matplotlib import pyplot as plt
 
-from Architecture.MobilenetV2 import build_model
+from architecture.MobilenetV2 import build_model
 from loss_function.keras_ssd_loss import SSDLoss
 from layers.keras_layer_AnchorBoxes import AnchorBoxes
 from layers.keras_layer_DecodeDetections import DecodeDetections
