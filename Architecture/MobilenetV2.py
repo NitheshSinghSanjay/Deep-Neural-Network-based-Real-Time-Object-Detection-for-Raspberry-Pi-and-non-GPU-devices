@@ -19,13 +19,111 @@ limitations under the License.
 from __future__ import division
 import numpy as np
 from keras.models import Model
-from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, BatchNormalization, ELU, Reshape, Concatenate, Activation
+from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, BatchNormalization, ELU, Reshape, Concatenate, Activation, ReLU
+from keras.layers import DepthwiseConv2D, add
 from keras.regularizers import l2
 import keras.backend as K
 
 from keras_layers.keras_layer_AnchorBoxes import AnchorBoxes
 from keras_layers.keras_layer_DecodeDetections import DecodeDetections
 from keras_layers.keras_layer_DecodeDetectionsFast import DecodeDetectionsFast
+
+#def relu6(x):
+#   return K.relu(x, max_value=6)
+
+
+def _reg_conv_block(inputs, filters, kernel, strides, name):
+    x = Conv2D(filters, kernel, padding="same", strides=strides, name=name)(inputs)
+    return x
+
+def _conv_block(inputs, filters, kernel, strides):
+    """Convolution Block
+    This function defines a 2D convolution operation with BN and relu6.
+
+    # Arguments
+        inputs: Tensor, input tensor of conv layer.
+        filters: Integer, the dimensionality of the output space.
+        kernel: An integer or tuple/list of 2 integers, specifying the
+            width and height of the 2D convolution window.
+        strides: An integer or tuple/list of 2 integers,
+            specifying the strides of the convolution along the width and height.
+            Can be a single integer to specify the same value for
+            all spatial dimensions.
+
+    # Returns
+        Output tensor.
+    """
+
+    channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
+
+    x = Conv2D(filters, kernel, padding='same', strides=strides)(inputs)
+    #x = BatchNormalization(axis=channel_axis)(x)
+    return ReLU(max_value=6)(x)
+
+
+def _bottleneck(inputs, filters, kernel, t, s, r=False):
+    """Bottleneck
+    This function defines a basic bottleneck structure.
+
+    # Arguments
+        inputs: Tensor, input tensor of conv layer.
+        filters: Integer, the dimensionality of the output space.
+        kernel: An integer or tuple/list of 2 integers, specifying the
+            width and height of the 2D convolution window.
+        t: Integer, expansion factor.
+            t is always applied to the input size.
+        s: An integer or tuple/list of 2 integers,specifying the strides
+            of the convolution along the width and height.Can be a single
+            integer to specify the same value for all spatial dimensions.
+        r: Boolean, Whether to use the residuals.
+
+    # Returns
+        Output tensor.
+    """
+
+    channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
+    tchannel = K.int_shape(inputs)[channel_axis] * t
+
+    x = _conv_block(inputs, tchannel, (1, 1), (1, 1))
+
+    x = DepthwiseConv2D(kernel, strides=(s, s), depth_multiplier=1, padding='same')(x)
+    #x = BatchNormalization(axis=channel_axis)(x)
+    x = ReLU(max_value=6)(x)
+
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same')(x)
+    #x = BatchNormalization(axis=channel_axis)(x)
+
+    if r:
+        x = add([x, inputs])
+    return x
+
+
+def _inverted_residual_block(inputs, filters, kernel, t, strides, n):
+    """Inverted Residual Block
+    This function defines a sequence of 1 or more identical layers.
+
+    # Arguments
+        inputs: Tensor, input tensor of conv layer.
+        filters: Integer, the dimensionality of the output space.
+        kernel: An integer or tuple/list of 2 integers, specifying the
+            width and height of the 2D convolution window.
+        t: Integer, expansion factor.
+            t is always applied to the input size.
+        s: An integer or tuple/list of 2 integers,specifying the strides
+            of the convolution along the width and height.Can be a single
+            integer to specify the same value for all spatial dimensions.
+        n: Integer, layer repeat times.
+    # Returns
+        Output tensor.
+    """
+
+    x = _bottleneck(inputs, filters, kernel, t, strides)
+
+    for i in range(1, n):
+        x = _bottleneck(x, filters, kernel, t, 1, True)
+
+    return x
+
 
 def build_model(image_size,
                 n_classes,
@@ -34,6 +132,7 @@ def build_model(image_size,
                 min_scale=0.1,
                 max_scale=0.9,
                 scales=None,
+                #aspect_ratios_global=[0.5, 1.0, 2.0],
                 aspect_ratios_global=[0.5, 1.0, 2.0],
                 aspect_ratios_per_layer=None,
                 two_boxes_for_ar1=True,
@@ -117,7 +216,7 @@ def build_model(image_size,
             the image. If the list contains ints/floats, then that value will be used for both spatial dimensions.
             If the list contains tuples of two ints/floats, then they represent `(step_height, step_width)`.
             If no steps are provided, then they will be computed such that the anchor box center points will form an
-            equidistant grid within the image dimensions.
+            equidistant grid within the image dimensio ns.
         offsets (list, optional): `None` or a list with as many elements as there are predictor layers. The elements can be
             either floats or tuples of two floats. These numbers represent for each predictor layer how many
             pixels from the top and left boarders of the image the top-most and left-most anchor box center points should be
@@ -263,50 +362,19 @@ def build_model(image_size,
     # Build the network.
     ############################################################################
 
-    x = Input(shape=(img_height, img_width, img_channels))
+    
+    inputs = Input(shape=(img_height, img_width, img_channels))
+    # _conv_block(inputs, filters, kernel, stride)
+    x = _conv_block(inputs, 32, (3, 3), strides=(2, 2))
 
-    # The following identity layer is only needed so that the subsequent lambda layers can be optional.
-    x1 = Lambda(identity_layer, output_shape=(img_height, img_width, img_channels), name='identity_layer')(x)
-    if not (subtract_mean is None):
-        x1 = Lambda(input_mean_normalization, output_shape=(img_height, img_width, img_channels), name='input_mean_normalization')(x1)
-    if not (divide_by_stddev is None):
-        x1 = Lambda(input_stddev_normalization, output_shape=(img_height, img_width, img_channels), name='input_stddev_normalization')(x1)
-    if swap_channels:
-        x1 = Lambda(input_channel_swap, output_shape=(img_height, img_width, img_channels), name='input_channel_swap')(x1)
-
-    conv1 = Conv2D(32, (5, 5), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv1')(x1)
-    conv1 = BatchNormalization(axis=3, momentum=0.99, name='bn1')(conv1) # Tensorflow uses filter format [filter_height, filter_width, in_channels, out_channels], hence axis = 3
-    conv1 = ELU(name='elu1')(conv1)
-    pool1 = MaxPooling2D(pool_size=(2, 2), name='pool1')(conv1)
-
-    conv2 = Conv2D(48, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv2')(pool1)
-    conv2 = BatchNormalization(axis=3, momentum=0.99, name='bn2')(conv2)
-    conv2 = ELU(name='elu2')(conv2)
-    pool2 = MaxPooling2D(pool_size=(2, 2), name='pool2')(conv2)
-
-    conv3 = Conv2D(64, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv3')(pool2)
-    conv3 = BatchNormalization(axis=3, momentum=0.99, name='bn3')(conv3)
-    conv3 = ELU(name='elu3')(conv3)
-    pool3 = MaxPooling2D(pool_size=(2, 2), name='pool3')(conv3)
-
-    conv4 = Conv2D(64, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv4')(pool3)
-    conv4 = BatchNormalization(axis=3, momentum=0.99, name='bn4')(conv4)
-    conv4 = ELU(name='elu4')(conv4)
-    pool4 = MaxPooling2D(pool_size=(2, 2), name='pool4')(conv4)
-
-    conv5 = Conv2D(48, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv5')(pool4)
-    conv5 = BatchNormalization(axis=3, momentum=0.99, name='bn5')(conv5)
-    conv5 = ELU(name='elu5')(conv5)
-    pool5 = MaxPooling2D(pool_size=(2, 2), name='pool5')(conv5)
-
-    conv6 = Conv2D(48, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv6')(pool5)
-    conv6 = BatchNormalization(axis=3, momentum=0.99, name='bn6')(conv6)
-    conv6 = ELU(name='elu6')(conv6)
-    pool6 = MaxPooling2D(pool_size=(2, 2), name='pool6')(conv6)
-
-    conv7 = Conv2D(32, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='conv7')(pool6)
-    conv7 = BatchNormalization(axis=3, momentum=0.99, name='bn7')(conv7)
-    conv7 = ELU(name='elu7')(conv7)
+    x0 = _inverted_residual_block(x, 16, (3, 3), t=1, strides=1, n=1)
+    x1 = _inverted_residual_block(x0, 24, (3, 3), t=6, strides=2, n=2)
+    x2 = _inverted_residual_block(x1, 32, (3, 3), t=6, strides=2, n=3)
+    x3 = _inverted_residual_block(x2, 64, (3, 3), t=6, strides=2, n=4)
+    x4 = _inverted_residual_block(x3, 96, (3, 3), t=6, strides=1, n=3)
+    x5 = _inverted_residual_block(x4, 160, (3, 3), t=6, strides=2, n=3)
+    x6 = _inverted_residual_block(x5, 320, (3, 3), t=6, strides=1, n=1)
+    
 
     # The next part is to add the convolutional predictor layers on top of the base network
     # that we defined above. Note that I use the term "base network" differently than the paper does.
@@ -320,15 +388,15 @@ def build_model(image_size,
     # We precidt `n_classes` confidence values for each box, hence the `classes` predictors have depth `n_boxes * n_classes`
     # We predict 4 box coordinates for each box, hence the `boxes` predictors have depth `n_boxes * 4`
     # Output shape of `classes`: `(batch, height, width, n_boxes * n_classes)`
-    classes4 = Conv2D(n_boxes[0] * n_classes, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='classes4')(conv4)
-    classes5 = Conv2D(n_boxes[1] * n_classes, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='classes5')(conv5)
-    classes6 = Conv2D(n_boxes[2] * n_classes, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='classes6')(conv6)
-    classes7 = Conv2D(n_boxes[3] * n_classes, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='classes7')(conv7)
+    classes4 = Conv2D(n_boxes[0] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes4')(x3)
+    classes5 = Conv2D(n_boxes[1] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes5')(x4)
+    classes6 = Conv2D(n_boxes[2] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes6')(x5)
+    classes7 = Conv2D(n_boxes[3] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes7')(x6)
     # Output shape of `boxes`: `(batch, height, width, n_boxes * 4)`
-    boxes4 = Conv2D(n_boxes[0] * 4, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='boxes4')(conv4)
-    boxes5 = Conv2D(n_boxes[1] * 4, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='boxes5')(conv5)
-    boxes6 = Conv2D(n_boxes[2] * 4, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='boxes6')(conv6)
-    boxes7 = Conv2D(n_boxes[3] * 4, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal', kernel_regularizer=l2(l2_reg), name='boxes7')(conv7)
+    boxes4 = Conv2D(n_boxes[0] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes4')(x3)
+    boxes5 = Conv2D(n_boxes[1] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes5')(x4)
+    boxes6 = Conv2D(n_boxes[2] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes6')(x5)
+    boxes7 = Conv2D(n_boxes[3] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes7')(x6)
 
     # Generate the anchor boxes
     # Output shape of `anchors`: `(batch, height, width, n_boxes, 8)`
@@ -393,7 +461,7 @@ def build_model(image_size,
     predictions = Concatenate(axis=2, name='predictions')([classes_softmax, boxes_concat, anchors_concat])
 
     if mode == 'training':
-        model = Model(inputs=x, outputs=predictions)
+        model = Model(inputs=inputs, outputs=predictions)
     elif mode == 'inference':
         decoded_predictions = DecodeDetections(confidence_thresh=confidence_thresh,
                                                iou_threshold=iou_threshold,
@@ -404,7 +472,7 @@ def build_model(image_size,
                                                img_height=img_height,
                                                img_width=img_width,
                                                name='decoded_predictions')(predictions)
-        model = Model(inputs=x, outputs=decoded_predictions)
+        model = Model(inputs=inputs, outputs=decoded_predictions)
     elif mode == 'inference_fast':
         decoded_predictions = DecodeDetectionsFast(confidence_thresh=confidence_thresh,
                                                    iou_threshold=iou_threshold,
@@ -415,7 +483,7 @@ def build_model(image_size,
                                                    img_height=img_height,
                                                    img_width=img_width,
                                                    name='decoded_predictions')(predictions)
-        model = Model(inputs=x, outputs=decoded_predictions)
+        model = Model(inputs=inputs, outputs=decoded_predictions)
     else:
         raise ValueError("`mode` must be one of 'training', 'inference' or 'inference_fast', but received '{}'.".format(mode))
 
