@@ -304,22 +304,20 @@ history = model.fit_generator(generator=train_generator,
 
 # Let's look at how the training and validation loss evolved to check whether our training is going in the right direction:
 
-#%%
+
 plt.figure(figsize=(20,12))
 plt.plot(history.history['loss'], label='loss')
 plt.plot(history.history['val_loss'], label='val_loss')
 plt.legend(loc='upper right', prop={'size': 24});
 
-#%% [markdown]
 # The validation loss has been decreasing at a similar pace as the training loss, indicating that our model has been learning effectively over the last 30 epochs. We could try to train longer and see if the validation loss can be decreased further. Once the validation loss stops decreasing for a couple of epochs in a row, that's when we will want to stop training. Our final weights will then be the weights of the epoch that had the lowest validation loss.
-#%% [markdown]
+
 # ### 5. Make predictions
 # 
 # Now let's make some predictions on the validation dataset with the trained model. For convenience we'll use the validation generator which we've already set up above. Feel free to change the batch size.
 # 
 # You can set the `shuffle` option to `False` if you would like to check the model's progress on the same image(s) over the course of the training.
 
-#%%
 # 1: Set the generator for the predictions.
 
 predict_generator = val_dataset.generate(batch_size=1,
@@ -330,6 +328,3 @@ predict_generator = val_dataset.generate(batch_size=1,
                                                   'processed_labels',
                                                   'filenames'},
                                          keep_images_without_gt=False)
-
-
-
