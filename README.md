@@ -14,7 +14,7 @@ The goal with MobileNet-Tiny is to develop an architecture that can run at a min
 MobileNet-Tiny offers three main contributions to the field of object detection. This model:
 * Demonstrates the power of small artificial neural networks with fast non-GPU object detection capabilities.
 * Suggests that since batch normalization in small neural networks increase the total number of parameters and total number of computations required and contribute very less in achieving high accuracy, not implementing batch normalization in small networks can drastically increase the overall speed of the network without signicant loss of accuracy. 
-* Suggests that carefully optimizing the number of predictor layers and aspect ratios for anchor boxes in SSD can result in signicant improvement of detection speed.
+* Suggests that carefully optimizing the number of predictor layers and aspect ratios for anchor boxes in SSD can result in signifcant improvement of detection speed.
 
 This project is still in progress
 https://www.linux-projects.org/uv4l/installation/
