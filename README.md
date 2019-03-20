@@ -11,7 +11,7 @@ MobileNet-Tiny tries to address this problem. Using the Single Shot Multibox Det
 The goal with MobileNet-Tiny is to develop an architecture that can run at a minimum of 3 frames per second (FPS) on a Raspberry Pi (GoPiGo) without the requirement of a base station or a cloud for object detection with a mAP of ~22.1% on MS COCO dataset and ~33% on PASCAL VOC dataset.
 
 ### Contribution
-MobileNet-Tiny oers three main contributions to the eld of object detection. This model:
+MobileNet-Tiny offers three main contributions to the eld of object detection. This model:
 * Demonstrates the power of small articial neural networks with fast non-GPU object detection capabilities.
 * Suggests that since batch normalization in small neural networks increase the total number of parameters and total number of computations required and contribute very less in achieving high accuracy, not implementing batch normalization in small networks can drastically increase the overall speed of the network without signicant loss of accuracy. 
 * Suggests that carefully optimizing the number of predictor layers and aspect ratios for anchor boxes in SSD can result in signicant improvement of detection speed.
