@@ -371,15 +371,24 @@ def build_model(image_size,
     # We precidt `n_classes` confidence values for each box, hence the `classes` predictors have depth `n_boxes * n_classes`
     # We predict 4 box coordinates for each box, hence the `boxes` predictors have depth `n_boxes * 4`
     # Output shape of `classes`: `(batch, height, width, n_boxes * n_classes)`
-    classes4 = Conv2D(n_boxes[0] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes4')(x3)
-    classes5 = Conv2D(n_boxes[1] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes5')(x4)
-    classes6 = Conv2D(n_boxes[2] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes6')(x5)
-    classes7 = Conv2D(n_boxes[3] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes7')(x6)
+    #_bottleneck(inputs, filters, kernel, t, s, r=False)
+    #classes4 = Conv2D(n_boxes[0] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes4')(x3)
+    classes4 = _bottleneck(inputs = x3, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
+    #classes5 = Conv2D(n_boxes[1] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes5')(x4)
+    classes5 = _bottleneck(inputs = x4, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
+    #classes6 = Conv2D(n_boxes[2] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes6')(x5)
+    classes6 = _bottleneck(inputs = x5, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
+    #classes7 = Conv2D(n_boxes[3] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes7')(x6)
+    classes7 = _bottleneck(inputs = x6, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
     # Output shape of `boxes`: `(batch, height, width, n_boxes * 4)`
-    boxes4 = Conv2D(n_boxes[0] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes4')(x3)
-    boxes5 = Conv2D(n_boxes[1] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes5')(x4)
-    boxes6 = Conv2D(n_boxes[2] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes6')(x5)
-    boxes7 = Conv2D(n_boxes[3] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes7')(x6)
+    #boxes4 = Conv2D(n_boxes[0] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes4')(x3)
+    boxes4 = _bottleneck(inputs = x3, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
+    #boxes5 = Conv2D(n_boxes[1] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes5')(x4)
+    boxes5 = _bottleneck(inputs = x4, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
+    #boxes6 = Conv2D(n_boxes[2] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes6')(x5)
+    boxes6 = _bottleneck(inputs = x5, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
+    #boxes7 = Conv2D(n_boxes[3] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes7')(x6)
+    boxes7 = _bottleneck(inputs = x6, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
 
     # Generate the anchor boxes
     # Output shape of `anchors`: `(batch, height, width, n_boxes, 8)`
