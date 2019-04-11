@@ -4,6 +4,7 @@ In this project we present a new neural network architecture, MobileNet-Tiny tha
 
 ## Results
 You can see results and example detections here: https://nitheshsinghsanjay.github.io/
+link to download the paper will be made available once it is published. contact us if you have any questions.
 
 ## How to use the code
 Above code is for demonstration purpose only. It is trained on udacity self driving dataset which contains 5 different objects: car, truck, pedestrian, bicyclist, light.
