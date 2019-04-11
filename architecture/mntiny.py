@@ -11,9 +11,6 @@ from layers.keras_layer_AnchorBoxes import AnchorBoxes
 from layers.keras_layer_DecodeDetections import DecodeDetections
 from layers.keras_layer_DecodeDetectionsFast import DecodeDetectionsFast
 
-#def relu6(x):
-#   return K.relu(x, max_value=6)
-
 
 def _reg_conv_block(inputs, filters, kernel, strides, name):
     x = Conv2D(filters, kernel, padding="same", strides=strides, name=name)(inputs)
@@ -134,30 +131,6 @@ def build_model(image_size,
                 nms_max_output_size=400,
                 return_predictor_sizes=False):
     '''
-    Build a Keras model with SSD architecture, see references.
-
-    The model consists of convolutional feature layers and a number of convolutional
-    predictor layers that take their input from different feature layers.
-    The model is fully convolutional.
-
-    The implementation found here is a smaller version of the original architecture
-    used in the paper (where the base network consists of a modified VGG-16 extended
-    by a few convolutional feature layers), but of course it could easily be changed to
-    an arbitrarily large SSD architecture by following the general design pattern used here.
-    This implementation has 7 convolutional layers and 4 convolutional predictor
-    layers that take their input from layers 4, 5, 6, and 7, respectively.
-
-    Most of the arguments that this function takes are only needed for the anchor
-    box layers. In case you're training the network, the parameters passed here must
-    be the same as the ones used to set up `SSDBoxEncoder`. In case you're loading
-    trained weights, the parameters passed here must be the same as the ones used
-    to produce the trained weights.
-
-    Some of these arguments are explained in more detail in the documentation of the
-    `SSDBoxEncoder` class.
-
-    Note: Requires Keras v2.0 or later. Training currently works only with the
-    TensorFlow backend (v1.0 or later).
 
     Arguments:
         image_size (tuple): The input image size in the format `(height, width, channels)`.
@@ -244,16 +217,13 @@ def build_model(image_size,
             spatial dimensions of the predictor layers), for inference you don't need them.
 
     Returns:
-        model: The Keras SSD model.
+        model: The Keras MobileNet-Tiny model.
         predictor_sizes (optional): A Numpy array containing the `(height, width)` portion
             of the output tensor shape for each convolutional predictor layer. During
             training, the generator function needs this in order to transform
             the ground truth labels into tensors of identical structure as the
             output tensors of the model, which is in turn needed for the cost
             function.
-
-    References:
-        https://arxiv.org/abs/1512.02325v5
     '''
 
     n_predictor_layers = 4 # The number of predictor conv layers in the network
@@ -359,35 +329,16 @@ def build_model(image_size,
     x6 = _inverted_residual_block(x5, 320, (3, 3), t=6, strides=1, n=1)
     
 
-    # The next part is to add the convolutional predictor layers on top of the base network
-    # that we defined above. Note that I use the term "base network" differently than the paper does.
-    # To me, the base network is everything that is not convolutional predictor layers or anchor
-    # box layers. In this case we'll have four predictor layers, but of course you could
-    # easily rewrite this into an arbitrarily deep base network and add an arbitrary number of
-    # predictor layers on top of the base network by simply following the pattern shown here.
-
     # Build the convolutional predictor layers on top of conv layers 4, 5, 6, and 7.
-    # We build two predictor layers on top of each of these layers: One for class prediction (classification), one for box coordinate prediction (localization)
-    # We precidt `n_classes` confidence values for each box, hence the `classes` predictors have depth `n_boxes * n_classes`
-    # We predict 4 box coordinates for each box, hence the `boxes` predictors have depth `n_boxes * 4`
-    # Output shape of `classes`: `(batch, height, width, n_boxes * n_classes)`
-    #_bottleneck(inputs, filters, kernel, t, s, r=False)
-    #classes4 = Conv2D(n_boxes[0] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes4')(x3)
     classes4 = _bottleneck(inputs = x3, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
-    #classes5 = Conv2D(n_boxes[1] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes5')(x4)
     classes5 = _bottleneck(inputs = x4, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
-    #classes6 = Conv2D(n_boxes[2] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes6')(x5)
     classes6 = _bottleneck(inputs = x5, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
-    #classes7 = Conv2D(n_boxes[3] * n_classes, (3, 3), strides=(1, 1), padding="same", name='classes7')(x6)
     classes7 = _bottleneck(inputs = x6, filters = n_boxes[0] * n_classes, kernel = (3, 3), t=1, s=1, r=False)
+
     # Output shape of `boxes`: `(batch, height, width, n_boxes * 4)`
-    #boxes4 = Conv2D(n_boxes[0] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes4')(x3)
     boxes4 = _bottleneck(inputs = x3, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
-    #boxes5 = Conv2D(n_boxes[1] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes5')(x4)
     boxes5 = _bottleneck(inputs = x4, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
-    #boxes6 = Conv2D(n_boxes[2] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes6')(x5)
     boxes6 = _bottleneck(inputs = x5, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
-    #boxes7 = Conv2D(n_boxes[3] * 4, (3, 3), strides=(1, 1), padding="same", name='boxes7')(x6)
     boxes7 = _bottleneck(inputs = x6, filters = n_boxes[0] * 4, kernel = (3, 3), t=1, s=1, r=False)
 
     # Generate the anchor boxes
