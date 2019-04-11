@@ -1,4 +1,6 @@
 
+# This code is inspired by https://github.com/pierluigiferrari/ssd_keras 
+
 from __future__ import division
 import numpy as np
 from keras.models import Model
