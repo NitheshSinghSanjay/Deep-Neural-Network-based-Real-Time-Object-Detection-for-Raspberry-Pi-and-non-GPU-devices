@@ -1,4 +1,4 @@
-# SSD-based-object-detection-and-collision-avoidance-for-GoPiGo
+# Design and Implementation of a Deep Neural Network based Real Time Object Detection for Raspberry Pi and non-GPU Devices.
 ## Abstract
 In this project we present a new neural network architecture, MobileNet-Tiny that can be used to harness the power of GPU based real-time object detection in raspberry-pi and also in devices with the absence of a GPU / restricted graphic processing capabilities such as mobile phones, laptops, etc. MobileNet-Tiny trained on COCO dataset running on a non-Gpu laptop dell xps 13, achieves an accuracy of 19.0 mAP and a speed of 19.4 FPS which is 3 times as fast as MobileNetV2, and when running on a raspberrypi it achieves a speed of 4.5 FPS which is up to 7 times faster than MobileNetV2. MobileNet-Tiny was modeled to offer a compact, quick and well balanced object detection solution to variety of GPU restricted devices.
 
